@@ -6,6 +6,7 @@ import GUI from 'lil-gui'
 import gsap from 'gsap'
 import particlesVertexShader from './shaders/particles/vertex.glsl?raw'
 import particlesFragmentShader from './shaders/particles/fragment.glsl?raw'
+import { _colorStringFilter } from 'gsap/gsap-core'
 
 /**
  * Base
@@ -89,17 +90,56 @@ const particles = {}
 
 gltfLoader.load('./models.glb', 
     (model) => {
-        console.log(model.scene)
+
+        ///// positions
+        const positions = model.scene.children.map( child => child.geometry.attributes.position)
+        console.log(positions)
+
+        // my solution
+        particles.maxCount = positions.reduce( 
+            (maxCount, position) => 
+                maxCount = position.count > maxCount ? position.count : maxCount
+            , 0
+        )
+
+        particles.positions = []
+        for (const position of positions){
+
+            const originalArray = position.array
+            const newArray = new Float32Array(particles.maxCount * 3)
+
+            for ( let i = 0; i < particles.maxCount; i++){
+                const i3 = i* 3
+
+                if(i3 < originalArray.length){
+                    newArray[i3 + 0] = originalArray[i3 + 0]
+                    newArray[i3 + 1] = originalArray[i3 + 1]
+                    newArray[i3 + 2] = originalArray[i3 + 2]
+                }
+                else {
+                    const randomIndex = Math.floor(positions.count * Math.random()) * 3
+                    newArray[i3 + 0] = originalArray[randomIndex]
+                    newArray[i3 + 1] = originalArray[randomIndex]
+                    newArray[i3 + 2] = originalArray[randomIndex]
+                }
+            }
+            particles.positions.push( new THREE.Float32BufferAttribute( newArray, 3))
+        }
+         
+  
+
         // Geometry
-        particles.geometry = new THREE.SphereGeometry(3)
-        particles.geometry.setIndex(null)
+        particles.geometry = new THREE.BufferGeometry()
+        particles.geometry.setAttribute('position', particles.positions[1])
+        // particles.geometry.setIndex(null)
+
 
         // Material
         particles.material = new THREE.ShaderMaterial({
         vertexShader: particlesVertexShader,
         fragmentShader: particlesFragmentShader,
         uniforms:{
-            uSize: new THREE.Uniform(0.4),
+            uSize: new THREE.Uniform(0.2),
             uResolution: new THREE.Uniform(new THREE.Vector2(sizes.width * sizes.pixelRatio, sizes.height * sizes.pixelRatio))
         },
         blending: THREE.AdditiveBlending,
@@ -110,7 +150,7 @@ gltfLoader.load('./models.glb',
         particles.points = new THREE.Points(particles.geometry, particles.material)
         scene.add(particles.points)
         },
-        () => {console.log('...loding')}, () =>{console.log('error')}
+        () => {console.log('...loding')}, (error) =>{console.log(error)}
     )
 
 
