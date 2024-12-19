@@ -12,7 +12,7 @@ import { _colorStringFilter } from 'gsap/gsap-core'
  * Base
  */
 // Debug
-const gui = new GUI({ width: 340 })
+const gui = new GUI({ width: 340 }).close()
 const debugObject = {}
 
 // Canvas
@@ -167,13 +167,13 @@ gltfLoader.load('./models.glb',
 
         // Points
         particles.points = new THREE.Points(particles.geometry, particles.material)
+        particles.points.frustumCulled = false
         scene.add(particles.points)       
         
         //methods
         particles.morph = (index) =>{
             particles.geometry.attributes.position = particles.positions[particles.index]
             particles.geometry.attributes.aPositionTarget =particles.positions[index]
-            const randomNum = Math.random()
 
 
             //animate uProgress
