@@ -88,12 +88,14 @@ renderer.setClearColor(debugObject.clearColor)
 
 const particles = {}
 
+
 gltfLoader.load('./models.glb', 
     (model) => {
 
         particles.index = 0
 
         ///// positions
+
         const positions = model.scene.children.map( child => child.geometry.attributes.position)
         // console.log(positions)
 
@@ -132,21 +134,32 @@ gltfLoader.load('./models.glb',
   
 
         // Geometry
+        const sizesArray = new Float32Array(particles.maxCount)
+        for (let i = 0; i < particles.maxCount; i++){
+            sizesArray[i] = Math.random()
+        }
+
         particles.geometry = new THREE.BufferGeometry()
         particles.geometry.setAttribute('position', particles.positions[particles.index])
         particles.geometry.setAttribute('aPositionTarget', particles.positions[3])
+        particles.geometry.setAttribute('aSize', new THREE.BufferAttribute(sizesArray, 1))
 
         // particles.geometry.setIndex(null)
 
+        particles.colorA = '#ff7300'
+        particles.colorB ='#0091ff'
 
         // Material
         particles.material = new THREE.ShaderMaterial({
         vertexShader: particlesVertexShader,
         fragmentShader: particlesFragmentShader,
         uniforms:{
-            uSize: new THREE.Uniform(0.2),
+            uSize: new THREE.Uniform(0.4),
             uResolution: new THREE.Uniform(new THREE.Vector2(sizes.width * sizes.pixelRatio, sizes.height * sizes.pixelRatio)),
-            uProgress: new THREE.Uniform(0)
+            uProgress: new THREE.Uniform(0),
+            uColorA: new THREE.Uniform( new THREE.Color(particles.colorA)),
+            uColorB: new THREE.Uniform( new THREE.Color(particles.colorB)),
+
         },
         blending: THREE.AdditiveBlending,
         depthWrite: false,
@@ -160,6 +173,8 @@ gltfLoader.load('./models.glb',
         particles.morph = (index) =>{
             particles.geometry.attributes.position = particles.positions[particles.index]
             particles.geometry.attributes.aPositionTarget =particles.positions[index]
+            const randomNum = Math.random()
+
 
             //animate uProgress
             gsap.fromTo(
@@ -168,7 +183,7 @@ gltfLoader.load('./models.glb',
                 {value: 1 , duration: 3, ease:"liner"}
             )
             // save index
-            particles.index = index
+            particles.index = index       
         }
 
         particles.morph0 = () => {particles.morph(0)}
@@ -177,7 +192,22 @@ gltfLoader.load('./models.glb',
         particles.morph3 = () => {particles.morph(3)}
 
         // twiks
-        gui.add( particles.material.uniforms.uProgress, 'value').min(0).max(1).step(0.001).name('uProgress')
+        gui.add( particles.material.uniforms.uProgress, 'value')
+            .min(0).max(1)
+            .step(0.001)
+            .name('uProgress')
+            .listen()
+
+        gui.addColor(particles, 'colorA')
+            .onChange( () => {
+                particles.material.uniforms.uColorA.value.set(particles.colorA)
+            })
+
+        gui.addColor(particles, 'colorB')
+            .onChange( () => {
+                particles.material.uniforms.uColorB.value.set(particles.colorB)
+            })
+
         gui.add(particles, 'morph0')
         gui.add(particles, 'morph1')
         gui.add(particles, 'morph2')
@@ -185,8 +215,6 @@ gltfLoader.load('./models.glb',
         },
         () => {console.log('...loding')}, (error) =>{console.log(error)}
     )
-
-
 
 /**
  * Animate
