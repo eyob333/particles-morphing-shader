@@ -117,20 +117,23 @@ gltfLoader.load('./models.glb',
                     newArray[i3 + 2] = originalArray[i3 + 2]
                 }
                 else {
-                    const randomIndex = Math.floor(positions.count * Math.random()) * 3
-                    newArray[i3 + 0] = originalArray[randomIndex]
-                    newArray[i3 + 1] = originalArray[randomIndex]
-                    newArray[i3 + 2] = originalArray[randomIndex]
+                    const randomIndex = Math.floor(position.count * Math.random()) * 3
+                    newArray[i3 + 0] = originalArray[randomIndex + 0]
+                    newArray[i3 + 1] = originalArray[randomIndex + 1]
+                    newArray[i3 + 2] = originalArray[randomIndex + 2]
                 }
             }
             particles.positions.push( new THREE.Float32BufferAttribute( newArray, 3))
         }
          
+ 
   
 
         // Geometry
         particles.geometry = new THREE.BufferGeometry()
         particles.geometry.setAttribute('position', particles.positions[1])
+        particles.geometry.setAttribute('aPositionTarget', particles.positions[3])
+
         // particles.geometry.setIndex(null)
 
 
@@ -140,7 +143,8 @@ gltfLoader.load('./models.glb',
         fragmentShader: particlesFragmentShader,
         uniforms:{
             uSize: new THREE.Uniform(0.2),
-            uResolution: new THREE.Uniform(new THREE.Vector2(sizes.width * sizes.pixelRatio, sizes.height * sizes.pixelRatio))
+            uResolution: new THREE.Uniform(new THREE.Vector2(sizes.width * sizes.pixelRatio, sizes.height * sizes.pixelRatio)),
+            uProgress: new THREE.Uniform(0)
         },
         blending: THREE.AdditiveBlending,
         depthWrite: false,
@@ -148,10 +152,13 @@ gltfLoader.load('./models.glb',
 
         // Points
         particles.points = new THREE.Points(particles.geometry, particles.material)
-        scene.add(particles.points)
+        scene.add(particles.points)       
+        
+        gui.add( particles.material.uniforms.uProgress, 'value').min(0).max(1).step(0.001).name('uProgress')
         },
         () => {console.log('...loding')}, (error) =>{console.log(error)}
     )
+
 
 
 /**
@@ -164,7 +171,6 @@ const tick = () =>
 
     // Render normal scene
     renderer.render(scene, camera)
-
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
 }
