@@ -1,6 +1,8 @@
 uniform vec2 uResolution;
 uniform float uSize;
 
+varying vec2 Vuv;
+
 void main()
 {
     // Final position
@@ -12,4 +14,6 @@ void main()
     // Point size
     gl_PointSize = uSize * uResolution.y;
     gl_PointSize *= (1.0 / - viewPosition.z);
+
+    Vuv = uv;
 }
